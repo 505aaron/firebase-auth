@@ -1,10 +1,49 @@
 {
-  "name": "firebase-auth",
+  "name": "firebase-auth-lambda",
   "version": "1.0.0",
   "description": "A firebase authentication lambda function.",
   "main": "index.js",
   "repository": "git@github.com:505aaron/firebase-auth.git",
   "author": "Aaron Cordova",
   "license": "Apache-2.0",
-  "private": false
+  "private": false,
+  "dependencies": {
+    "aws-sdk": "^2.186.0",
+    "jest": "^22.1.4",
+    "jest-cli": "^22.1.4"
+  },
+  "engines": {
+    "node": ">6.10",
+    "yarn": "^1.3.2"
+  },
+  "devDependencies": {
+    "eslint": "^4.9.0",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.7.0"
+  },
+  "scripts": {
+    "lint": "./node_modules/.bin/eslint --ext .jsx --ext .js .",
+    "archive": "yarn install --prod && zip -r build.zip . -x *.git* -x *.spec.js -x *.spec.js.snap -x coverage && yarn install",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testPathIgnorePatterns": [
+      "/node_modules/"
+    ],
+    "coverageReporters": [
+      "lcov",
+      "html"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": -10
+      }
+    }
+  }
 }

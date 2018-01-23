@@ -1,0 +1,20 @@
+{
+  "extends": "airbnb-base",
+  "rules": {
+    "no-console": "off"
+  },
+  "globals": {
+      "it": true,
+      "xit": true,
+      "expect": true,
+      "describe": true,
+      "beforeEach": true,
+      "beforeAll": true,
+      "afterAll": true,
+      "afterEach": true,
+      "jest": true,
+      "xdescribe": true,
+      "test": true,
+      "__DEV__": true
+  }
+}
