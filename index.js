@@ -6,29 +6,35 @@ const AuthPolicy = require('./lib/AuthPolicy');
 const s3 = new AWS.S3();
 const getObject = Promise.promisify(s3.getObject, { context: s3 });
 
-const createFirebaseAdmin = (databaseURL, bucket, bucketKey) =>
-  getObject({
-    Bucket: bucket,
-    Key: bucketKey,
-  }).then(data =>
-    admin.initializeApp({
-      credential: data.Body,
-      databaseURL,
-    }));
+const createFirebaseAdmin = (databaseURL, bucket, bucketKey) => {
+  try {
+    admin.app();
+    // App is initialized.
+    return Promise.resolve();
+  } catch (e) {
+    console.log('Initializing firebase admin');
+    return getObject({
+      Bucket: bucket,
+      Key: bucketKey,
+    }).then((data) => {
+      const credential = JSON.parse(data.Body.toString('utf8'));
+      admin.initializeApp({
+        credential: admin.credential.cert(credential),
+        databaseURL,
+      });
+    });
+  }
+};
 
 exports.handler = (event, context) => {
   const bucket = process.env.BUCKET_NAME;
   const firebaseUrl = process.env.FIREBASE_URL;
   const firebaseKey = process.env.FIREBASE_SDK_KEY;
-
-  console.log('Method ARN: ', event.methodArn);
+  const { headers: { Authorization: authToken } } = event;
 
   createFirebaseAdmin(firebaseUrl, bucket, firebaseKey)
-    .then(() => admin.auth().verifyIdToken(event.authorizationToken))
-    .then((verifiedToken) => {
-      // TODO: Remove
-      console.log('Firebase token', verifiedToken);
-
+    .then(() => admin.auth().verifyIdToken(authToken))
+    .then(({ sub }) => {
       // parse the ARN from the incoming event
       const tmp = event.methodArn.split(':');
       const apiGatewayArnTmp = tmp[5].split('/');
@@ -40,20 +46,22 @@ exports.handler = (event, context) => {
         stage: apiGatewayArnTmp[1],
       };
 
-      const policy = new AuthPolicy(verifiedToken.uid, awsAccountId, apiOptions);
+      const policy = new AuthPolicy(sub, awsAccountId, apiOptions);
 
-      const graphql = `/graphql/?uid=${verifiedToken.uid}`;
-      policy.allowMethod(AuthPolicy.HttpVerb.GET, graphql);
-      policy.allowMethod(AuthPolicy.HttpVerb.POST, graphql);
+      policy.allowMethod(AuthPolicy.HttpVerb.GET, '/graphql');
+      policy.allowMethod(AuthPolicy.HttpVerb.POST, '/graphql');
 
       const built = policy.build();
 
-      // TODO: Remove
-      console.log('Policy DELETE', built);
       context.succeed(built);
     })
     .catch((e) => {
       console.error('Failed to authenticate', e);
-      context.fail('Unauhtorized');
+      let message = 'Unauthorized';
+      if (typeof e !== 'undefined' && e.errorMessage != null) {
+        message = e.errorMessage;
+      }
+
+      context.fail(message);
     });
 };
