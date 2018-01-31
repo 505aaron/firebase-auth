@@ -1,5 +1,5 @@
 const Promise = require('bluebird');
-const admin = require('firebase-admin');
+const admin = require('firebase-admin-auth');
 const AWS = require('aws-sdk');
 const { AuthPolicy } = require('./lib/AuthPolicy');
 
