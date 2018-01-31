@@ -1,7 +1,7 @@
 const Promise = require('bluebird');
 const admin = require('firebase-admin-auth');
 const AWS = require('aws-sdk');
-const { AuthPolicy } = require('./lib/AuthPolicy');
+const { AuthPolicy } = require('./lib');
 
 const s3 = new AWS.S3();
 const getObject = Promise.promisify(s3.getObject, { context: s3 });
